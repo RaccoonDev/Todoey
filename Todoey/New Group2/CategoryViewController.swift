@@ -7,12 +7,13 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
 
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext;
-    var categories = [Category]()
+    var categories:Results<Category>?
+    
+    let realm = try! Realm() // This is a perfectly valid way of initialize realm
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,22 +25,23 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        let category = categories[indexPath.row]
-        cell.textLabel?.text = category.name
+        cell.textLabel?.text = categories?[indexPath.row].name ?? "No categories added yet"
         
         return cell
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categories.count
+        return categories?.count ?? 1
     }
     
     //MARK: Data Manipulation Methods
     
-    func saveCategories() {
+    func save(category: Category) {
         
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("Error saving context \(error)")
         }
@@ -49,14 +51,7 @@ class CategoryViewController: UITableViewController {
     
     
     func loadCategories() {
-        
-        do{
-            let request: NSFetchRequest<Category> = Category.fetchRequest()
-            categories = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context \(error)")
-        }
-        
+        categories = realm.objects(Category.self)
         tableView.reloadData()
     }
     
@@ -70,11 +65,10 @@ class CategoryViewController: UITableViewController {
             // what will happen when user click add button
             if let text = textField.text {
                 
-                let newCategory = Category(context: self.context)
+                let newCategory = Category()
                 newCategory.name = text
-                self.categories.append(newCategory)
                 
-                self.saveCategories()
+                self.save(category: newCategory)
             }
         }
         
@@ -97,7 +91,7 @@ class CategoryViewController: UITableViewController {
         let destinationVC = segue.destination as! TodoListViewController
         
         if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categories[indexPath.row]
+            destinationVC.selectedCategory = categories?[indexPath.row]
         }
     }
     
