@@ -24,12 +24,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //        print(Realm.Configuration.defaultConfiguration.fileURL!)
         
         
-//        do {
-//            let realm = try Realm()
-//
-//        } catch {
-//            print("Error initializing realm, \(error)")
-//        }
+        do {
+            _ = try Realm() // Initialization
+        } catch {
+            print("Error initializing realm, \(error)")
+        }
         
         return true
     }

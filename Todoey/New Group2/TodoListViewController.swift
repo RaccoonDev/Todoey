@@ -22,7 +22,7 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+//        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
     }
     
     //MARK: - Table view data source methods
@@ -52,6 +52,7 @@ class TodoListViewController: UITableViewController {
         if let item = todoItems?[indexPath.row] {
             do {
                 try realm.write {
+                    // realm.delete(item) // this one deletes object from storage
                     item.done = !item.done
                 }
             } catch {
@@ -86,6 +87,7 @@ class TodoListViewController: UITableViewController {
                         try self.realm.write {
                             let newItem = Item()
                             newItem.title = text
+                            newItem.dateCreated = Date()
                             currentCategory.items.append(newItem)
                         }
                     } catch {
@@ -94,7 +96,6 @@ class TodoListViewController: UITableViewController {
                     
                     self.tableView.reloadData()
                 }
-//                self.save(item: newItem)
             }
         }
         
@@ -109,20 +110,6 @@ class TodoListViewController: UITableViewController {
     
     //MARK: Data model manipulations
     
-//    func save(item: Item) {
-//
-//        do {
-//            try realm.write {
-//                realm.add(item)
-//            }
-//        } catch {
-//            print("Error saving context \(error)")
-//        }
-//
-//        self.tableView.reloadData()
-//    }
-    
-    
     func loadItems() {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         
@@ -132,25 +119,25 @@ class TodoListViewController: UITableViewController {
 
 //MARK: - Search bar methods
 
-//extension TodoListViewController: UISearchBarDelegate {
-//
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//        let request: NSFetchRequest<Item> = Item.fetchRequest()
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-//
-//        loadItems(with: request, predicate: predicate )
-//    }
-//
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        if searchBar.text?.count == 0 {
-//            loadItems()
-//
-//            DispatchQueue.main.async {
-//                searchBar.resignFirstResponder()
-//            }
-//        }
-//    }
-//
-//}
+extension TodoListViewController: UISearchBarDelegate {
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        todoItems = todoItems?
+            .filter("title CONTAINS[cd] %@", searchBar.text!)
+            .sorted(byKeyPath: "dateCreated", ascending: true)
+        
+        tableView.reloadData()
+    }
+
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+    }
+
+}
 
